@@ -11,10 +11,14 @@ import 'mode.dart';
 class GameEngine extends StateNotifier<GameState> {
   final GameConfig baseConfig;
   final GameMode mode;
+  GameConfig? _lastEffectiveConfig;
+  Timer? _sessionTicker;
+  int _sessionRemainingMs = 0;
 
   // Internal sequence and guess tracking
   List<int> _currentSequence = [];
   int _currentGuessIndex = 0;
+  Set<int> _currentSelection = {};
   bool _isRevealing = false;
 
   GameEngine({required this.baseConfig, required this.mode})
@@ -35,25 +39,52 @@ class GameEngine extends StateNotifier<GameState> {
       phase: GamePhase.idle,
       guessIndex: 0,
     );
+    // Initialize session timer from baseConfig unless mode overrides it.
+    _sessionRemainingMs = baseConfig.sessionTimeLimitMs;
+    state = state.copyWith(sessionTimerRemainingMs: _sessionRemainingMs);
+    _startSessionTicker();
     await startRound();
+  }
+
+  void _startSessionTicker() {
+    _sessionTicker?.cancel();
+    // Ticker granularity of 200ms for UI responsiveness.
+    _sessionTicker = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      if (state.phase == GamePhase.guessing) {
+        _sessionRemainingMs = (_sessionRemainingMs - 200).clamp(0, 1 << 31);
+        state = state.copyWith(sessionTimerRemainingMs: _sessionRemainingMs);
+        if (_sessionRemainingMs <= 0) {
+          // Session time expired — end current round as failure.
+          _onRoundComplete(success: false);
+        }
+      }
+    });
   }
 
   // Start a single round: generate sequence, reveal it, then switch to guessing.
   Future<void> startRound() async {
     final effectiveConfig = mode.applyRoundStart(state, baseConfig);
-    final gridCells = state.gridSize * state.gridSize;
+    _lastEffectiveConfig = effectiveConfig;
 
-    // Sequence length grows with roundIndex; simple rule: startGridSize + roundIndex
-    final seqLen = baseConfig.startGridSize + state.roundIndex;
+    // Determine grid size for this round. Modes can override `startGridSize`
+    // and `gridIncrement` via the returned effectiveConfig. Grid grows by
+    // `gridIncrement` per successful round index.
+    final gridSizeForRound = (effectiveConfig.startGridSize + (state.roundIndex * effectiveConfig.gridIncrement)).clamp(effectiveConfig.startGridSize, effectiveConfig.maxGridSize);
+    final gridCells = gridSizeForRound * gridSizeForRound;
+
+    // Sequence length grows with roundIndex using effectiveConfig.
+    final seqLen = effectiveConfig.startGridSize + state.roundIndex * effectiveConfig.gridIncrement;
     _currentSequence = _generateSequence(seqLen, gridCells);
     _currentGuessIndex = 0;
+    _currentSelection = {};
 
-    // Update state with new sequence and reveal duration
+    // Update state with new sequence, grid size and reveal duration
     state = state.copyWith(
       sequence: List<int>.from(_currentSequence),
       guessIndex: 0,
       phase: GamePhase.revealing,
       revealDurationMs: effectiveConfig.revealDurationMs,
+      gridSize: gridSizeForRound,
     );
 
     // Reveal sequence to player
@@ -91,27 +122,41 @@ class GameEngine extends StateNotifier<GameState> {
   // Handle a player's guess; returns true if guess was correct.
   bool handleGuess(int position) {
     if (state.phase != GamePhase.guessing) return false;
-    final expected = _currentSequence[_currentGuessIndex];
-    final correct = position == expected;
-    if (correct) {
+    // Delegate validation to the active mode.
+    final result = mode.validateGuess(state, position, _currentSelection);
+
+    // Apply score and mistakes deltas.
+    var newScore = state.score + result.scoreDelta;
+    var newMistakes = state.mistakes + result.mistakesDelta;
+
+    // Update selection or guess index depending on mode instructions.
+    if (result.addToSelection) {
+      _currentSelection = Set<int>.from(_currentSelection)..add(position);
+    }
+    if (result.advanceGuessIndex && result.correct) {
       _currentGuessIndex++;
-      // award points for a correct guess
-      final newScore = state.score + 10; // simple flat score
-      state = state.copyWith(score: newScore, guessIndex: _currentGuessIndex);
-      // If sequence complete, end round successfully
-      if (_currentGuessIndex >= _currentSequence.length) {
-        _onRoundComplete(success: true);
-      }
-    } else {
-      final newMistakes = state.mistakes + 1;
-      state = state.copyWith(mistakes: newMistakes);
-      // Ask mode whether to continue based on mistakes
-      final result = mode.onRoundEnd(state);
-      if (!result.continueGame) {
+    }
+
+    // If the round completes, include any round completion bonus.
+    var finalScore = newScore;
+    if (result.roundComplete) {
+      finalScore = finalScore + result.roundCompletionBonus;
+    }
+
+    state = state.copyWith(score: finalScore, mistakes: newMistakes, guessIndex: _currentGuessIndex);
+
+    // If the mode reports the round complete, notify accordingly.
+    if (result.roundComplete) {
+      _onRoundComplete(success: result.correct);
+    } else if (!result.correct) {
+      // If incorrect and mode decides game should stop, end round.
+      final modeResult = mode.onRoundEnd(state);
+      if (!modeResult.continueGame) {
         _onRoundComplete(success: false);
       }
     }
-    return correct;
+
+    return result.correct;
   }
 
   // Called when round completes to advance or finish the game.
@@ -120,14 +165,16 @@ class GameEngine extends StateNotifier<GameState> {
     final result = mode.onRoundEnd(state);
     if (!result.continueGame) {
       state = state.copyWith(phase: GamePhase.finished);
+      _sessionTicker?.cancel();
       return;
     }
 
     // Prepare next round: increase roundIndex and maybe grid size.
     final nextRound = state.roundIndex + 1;
     var nextGrid = state.gridSize;
+    final cfg = _lastEffectiveConfig ?? baseConfig;
     if (success) {
-      nextGrid = (state.gridSize + baseConfig.gridIncrement).clamp(baseConfig.startGridSize, baseConfig.maxGridSize);
+      nextGrid = (state.gridSize + cfg.gridIncrement).clamp(cfg.startGridSize, cfg.maxGridSize);
     }
 
     state = state.copyWith(
@@ -146,11 +193,13 @@ class GameEngine extends StateNotifier<GameState> {
   void stop() {
     _isRevealing = false;
     state = state.copyWith(phase: GamePhase.finished, highlightedIndex: -1);
+    _sessionTicker?.cancel();
   }
 
   @override
   void dispose() {
     _isRevealing = false;
+    _sessionTicker?.cancel();
     super.dispose();
   }
 }

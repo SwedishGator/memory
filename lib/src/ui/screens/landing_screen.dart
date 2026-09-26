@@ -23,13 +23,24 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget roundsWidget = _selectedMode == 'fixed'
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Rounds'),
+              const SizedBox(height: 8),
+              Slider(value: _rounds.toDouble(), min: 1, max: 10, divisions: 9, label: '$_rounds', onChanged: (d) => setState(() => _rounds = d.toInt())),
+            ],
+          )
+        : const SizedBox.shrink();
     return Scaffold(
       appBar: AppBar(title: const Text('Memory Game')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             const Text('Select Mode', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             DropdownButton<String>(
@@ -41,11 +52,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               onChanged: (v) => setState(() => _selectedMode = v ?? 'fixed'),
             ),
             const SizedBox(height: 12),
-            if (_selectedMode == 'fixed') ...[
-              const Text('Rounds'),
-              const SizedBox(height: 8),
-              Slider(value: _rounds.toDouble(), min: 1, max: 10, divisions: 9, label: '$_rounds', onChanged: (d) => setState(() => _rounds = d.toInt())),
-            ],
+            roundsWidget,
             const SizedBox(height: 18),
             ElevatedButton(
               onPressed: () {
@@ -59,8 +66,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
               child: const Text('Settings'),
             ),
+            const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }

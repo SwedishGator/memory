@@ -25,6 +25,18 @@ class GameScreen extends ConsumerWidget {
     // Access the engine notifier to send commands (startGame, handleGuess, stop).
     final engine = ref.read(gameEngineProvider(mode).notifier);
 
+    // Conditionally show session timer widget
+    final Widget sessionTimerWidget = gameState.sessionTimerRemainingMs > 0
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.timer, size: 18),
+              const SizedBox(width: 6),
+              Text('${(gameState.sessionTimerRemainingMs / 1000).toStringAsFixed(1)}s'),
+            ],
+          )
+        : const SizedBox.shrink();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Memory Game'),
@@ -35,11 +47,12 @@ class GameScreen extends ConsumerWidget {
           )
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Top info row: round, score, mistakes
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,6 +62,8 @@ class GameScreen extends ConsumerWidget {
                 Text('Mistakes: ${gameState.mistakes}'),
               ],
             ),
+            const SizedBox(height: 8),
+            sessionTimerWidget,
             const SizedBox(height: 12),
             // Grid area expands to available space
             Expanded(
@@ -78,8 +93,10 @@ class GameScreen extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }

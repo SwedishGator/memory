@@ -20,6 +20,7 @@ class GameState {
   final int score; // accumulated score
   final GamePhase phase; // current phase
   final int revealDurationMs; // ms used for reveals (effective)
+  final int sessionTimerRemainingMs; // session-wide timer visible to UI (ms)
 
   const GameState({
     this.roundIndex = 0,
@@ -31,6 +32,7 @@ class GameState {
     this.score = 0,
     this.phase = GamePhase.idle,
     this.revealDurationMs = 1500,
+    this.sessionTimerRemainingMs = 0,
   });
 
   GameState copyWith({
@@ -43,6 +45,7 @@ class GameState {
     int? score,
     GamePhase? phase,
     int? revealDurationMs,
+    int? sessionTimerRemainingMs,
   }) {
     return GameState(
       roundIndex: roundIndex ?? this.roundIndex,
@@ -54,6 +57,7 @@ class GameState {
       score: score ?? this.score,
       phase: phase ?? this.phase,
       revealDurationMs: revealDurationMs ?? this.revealDurationMs,
+      sessionTimerRemainingMs: sessionTimerRemainingMs ?? this.sessionTimerRemainingMs,
     );
   }
 }

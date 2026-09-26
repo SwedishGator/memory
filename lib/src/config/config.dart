@@ -8,6 +8,8 @@ class GameConfig {
   final int revealDurationMs; // how long tiles are revealed (ms)
   final String initialDifficulty; // e.g. 'easy', 'medium', 'hard'
   final int allowedMistakes; // mistakes allowed in modes that support it
+  final String controlsPosition; // 'bottom', 'top', 'floating'
+  final int sessionTimeLimitMs; // session-wide time limit used by TimedMode
 
   const GameConfig({
     required this.startGridSize,
@@ -16,6 +18,8 @@ class GameConfig {
     required this.revealDurationMs,
     required this.initialDifficulty,
     required this.allowedMistakes,
+    required this.controlsPosition,
+    required this.sessionTimeLimitMs,
   });
 
   factory GameConfig.defaults() => const GameConfig(
@@ -25,6 +29,8 @@ class GameConfig {
         revealDurationMs: 1500,
         initialDifficulty: 'easy',
         allowedMistakes: 0,
+      controlsPosition: 'bottom',
+    sessionTimeLimitMs: 100000,
       );
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -34,6 +40,8 @@ class GameConfig {
         revealDurationMs: json['revealDurationMs'] as int? ?? 1500,
         initialDifficulty: json['initialDifficulty'] as String? ?? 'easy',
         allowedMistakes: json['allowedMistakes'] as int? ?? 0,
+      controlsPosition: json['controlsPosition'] as String? ?? 'bottom',
+    sessionTimeLimitMs: json['sessionTimeLimitMs'] as int? ?? 100000,
       );
 
   Map<String, dynamic> toJson() => {
@@ -43,6 +51,8 @@ class GameConfig {
         'revealDurationMs': revealDurationMs,
         'initialDifficulty': initialDifficulty,
         'allowedMistakes': allowedMistakes,
+        'controlsPosition': controlsPosition,
+        'sessionTimeLimitMs': sessionTimeLimitMs,
       };
 
   GameConfig copyWith({
@@ -52,6 +62,8 @@ class GameConfig {
     int? revealDurationMs,
     String? initialDifficulty,
     int? allowedMistakes,
+      String? controlsPosition,
+    int? sessionTimeLimitMs,
   }) {
     return GameConfig(
       startGridSize: startGridSize ?? this.startGridSize,
@@ -60,6 +72,8 @@ class GameConfig {
       revealDurationMs: revealDurationMs ?? this.revealDurationMs,
       initialDifficulty: initialDifficulty ?? this.initialDifficulty,
       allowedMistakes: allowedMistakes ?? this.allowedMistakes,
+        controlsPosition: controlsPosition ?? this.controlsPosition,
+        sessionTimeLimitMs: sessionTimeLimitMs ?? this.sessionTimeLimitMs,
     );
   }
 }
