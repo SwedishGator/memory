@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../providers/game_providers.dart';
 import '../../domain/mode.dart';
@@ -65,7 +66,13 @@ class GameScreen extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        // Restore system UI when leaving the game screen
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+        return true;
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Memory Game'),
         actions: [
@@ -117,13 +124,19 @@ class GameScreen extends ConsumerWidget {
                             // Button shows Start or Resume depending on phase
                             if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
                               return ElevatedButton(
-                                onPressed: () => engine.startGame(),
+                                onPressed: () async {
+                                  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                                  engine.startGame();
+                                },
                                 child: const Text('Start'),
                               );
                             }
                             if (gameState.phase == GamePhase.paused) {
                               return ElevatedButton(
-                                onPressed: () => engine.resume(),
+                                onPressed: () async {
+                                  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                                  engine.resume();
+                                },
                                 child: const Text('Resume'),
                               );
                             }
@@ -136,10 +149,14 @@ class GameScreen extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               if (gameState.phase == GamePhase.paused) {
+                                // restart should resume immersive mode
+                                await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
                                 engine.restartRound();
                               } else {
+                                // stopping should restore system UI
+                                await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
                                 engine.stop();
                               }
                             },
