@@ -38,6 +38,33 @@ class GameScreen extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
+    // Build pause overlay widget to show when the game is paused.
+    final Widget pauseOverlay = gameState.phase == GamePhase.paused
+        ? Positioned.fill(
+            child: Container(
+              color: Colors.black54,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Paused', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () => engine.resume(),
+                      child: const Text('Resume'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () => engine.restartRound(),
+                      child: const Text('Restart Round'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Memory Game'),
@@ -51,78 +78,83 @@ class GameScreen extends ConsumerWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Stack(
             children: [
-            // Top info row: round, score, mistakes
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Round: ${gameState.roundIndex + 1}'),
-                Text('Score: ${gameState.score}'),
-                Text('Mistakes: ${gameState.mistakes}'),
-              ],
-            ),
-            const SizedBox(height: 8),
-            sessionTimerWidget,
-            const SizedBox(height: 12),
-            // Grid area expands to available space
-            Expanded(
-              child: GridWidget(
-                state: gameState,
-                onTileTap: (index) {
-                  engine.handleGuess(index);
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Control buttons moved higher and given bottom padding so they
-            // won't be covered by system navigation on phones with soft
-            // navigation bars.
-            Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
-              child: Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Builder(builder: (context) {
-                      // Button shows Start or Resume depending on phase
-                      if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
-                        return ElevatedButton(
-                          onPressed: () => engine.startGame(),
-                          child: const Text('Start'),
-                        );
-                      }
-                      if (gameState.phase == GamePhase.paused) {
-                        return ElevatedButton(
-                          onPressed: () => engine.resume(),
-                          child: const Text('Resume'),
-                        );
-                      }
-                      return ElevatedButton(
-                        onPressed: () => engine.pause(),
-                        child: const Text('Pause'),
-                      );
-                    }),
+                  // Top info row: round, score, mistakes
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Round: ${gameState.roundIndex + 1}'),
+                      Text('Score: ${gameState.score}'),
+                      Text('Mistakes: ${gameState.mistakes}'),
+                    ],
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 8),
+                  sessionTimerWidget,
+                  const SizedBox(height: 12),
+                  // Grid area expands to available space
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (gameState.phase == GamePhase.paused) {
-                          engine.restartRound();
-                        } else {
-                          engine.stop();
-                        }
+                    child: GridWidget(
+                      state: gameState,
+                      onTileTap: (index) {
+                        engine.handleGuess(index);
                       },
-                      child: Text(gameState.phase == GamePhase.paused ? 'Restart' : 'Stop'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Control buttons moved higher and given bottom padding so they
+                  // won't be covered by system navigation on phones with soft
+                  // navigation bars.
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 24.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Builder(builder: (context) {
+                            // Button shows Start or Resume depending on phase
+                            if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
+                              return ElevatedButton(
+                                onPressed: () => engine.startGame(),
+                                child: const Text('Start'),
+                              );
+                            }
+                            if (gameState.phase == GamePhase.paused) {
+                              return ElevatedButton(
+                                onPressed: () => engine.resume(),
+                                child: const Text('Resume'),
+                              );
+                            }
+                            return ElevatedButton(
+                              onPressed: () => engine.pause(),
+                              child: const Text('Pause'),
+                            );
+                          }),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (gameState.phase == GamePhase.paused) {
+                                engine.restartRound();
+                              } else {
+                                engine.stop();
+                              }
+                            },
+                            child: Text(gameState.phase == GamePhase.paused ? 'Restart' : 'Stop'),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              pauseOverlay,
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
