@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/modes/fixed_rounds_mode.dart';
 import '../../domain/modes/endless_mode.dart';
+import '../../domain/modes/sequence_match_mode.dart';
+import '../../domain/modes/set_match_mode.dart';
+import '../../domain/modes/timed_mode.dart';
 import '../../domain/mode.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
@@ -48,6 +51,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               items: const [
                 DropdownMenuItem(value: 'fixed', child: Text('Fixed Rounds')),
                 DropdownMenuItem(value: 'endless', child: Text('Endless')),
+                DropdownMenuItem(value: 'sequence', child: Text('Sequence Match')),
+                DropdownMenuItem(value: 'set', child: Text('Set Match')),
+                DropdownMenuItem(value: 'timed', child: Text('Timed Mode')),
               ],
               onChanged: (v) => setState(() => _selectedMode = v ?? 'fixed'),
             ),
@@ -56,7 +62,26 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             const SizedBox(height: 18),
             ElevatedButton(
               onPressed: () {
-                GameMode mode = _selectedMode == 'fixed' ? FixedRoundsMode(rounds: _rounds) : EndlessMode(allowedMistakes: 0);
+                GameMode mode;
+                switch (_selectedMode) {
+                  case 'fixed':
+                    mode = FixedRoundsMode(rounds: _rounds);
+                    break;
+                  case 'endless':
+                    mode = EndlessMode(allowedMistakes: 0);
+                    break;
+                  case 'sequence':
+                    mode = SequenceMatchMode();
+                    break;
+                  case 'set':
+                    mode = SetMatchMode();
+                    break;
+                  case 'timed':
+                    mode = TimedMode();
+                    break;
+                  default:
+                    mode = FixedRoundsMode(rounds: _rounds);
+                }
                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => GameScreen(mode: mode)));
               },
               child: const Text('Start Game'),

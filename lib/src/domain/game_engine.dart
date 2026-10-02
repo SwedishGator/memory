@@ -39,10 +39,17 @@ class GameEngine extends StateNotifier<GameState> {
       phase: GamePhase.idle,
       guessIndex: 0,
     );
-    // Initialize session timer from baseConfig unless mode overrides it.
-    _sessionRemainingMs = baseConfig.sessionTimeLimitMs;
-    state = state.copyWith(sessionTimerRemainingMs: _sessionRemainingMs);
-    _startSessionTicker();
+    // Initialize session timer only if the current mode enables it.
+    final ms = mode.sessionTimeLimitMs(baseConfig);
+    if (ms != null && ms > 0) {
+      _sessionRemainingMs = ms;
+      state = state.copyWith(sessionTimerRemainingMs: _sessionRemainingMs);
+      _startSessionTicker();
+    } else {
+      _sessionRemainingMs = 0;
+      state = state.copyWith(sessionTimerRemainingMs: 0);
+      _sessionTicker?.cancel();
+    }
     await startRound();
   }
 
@@ -194,6 +201,40 @@ class GameEngine extends StateNotifier<GameState> {
     _isRevealing = false;
     state = state.copyWith(phase: GamePhase.finished, highlightedIndex: -1);
     _sessionTicker?.cancel();
+  }
+
+  // Pause the game (preserves state so it can be resumed).
+  void pause() {
+    if (state.phase == GamePhase.guessing || state.phase == GamePhase.revealing) {
+      _isRevealing = false;
+      state = state.copyWith(phase: GamePhase.paused);
+    }
+  }
+
+  // Resume a paused game.
+  void resume() {
+    if (state.phase == GamePhase.paused) {
+      // If we paused during revealing, resume revealing; otherwise go back to guessing.
+      // For simplicity, resume to guessing if sequence exists.
+      state = state.copyWith(phase: _currentSequence.isNotEmpty ? GamePhase.guessing : GamePhase.revealing);
+    }
+  }
+
+  // Restart the current round from scratch (does not reset the entire session).
+  void restartRound() async {
+    // Stop any reveal/tickers and start the same round again.
+    _isRevealing = false;
+    _sessionTicker?.cancel();
+    // Reinitialize session timer if mode enables it.
+    final ms = mode.sessionTimeLimitMs(baseConfig);
+    if (ms != null && ms > 0) {
+      // Keep remaining ms if already running, otherwise set to default.
+      _sessionRemainingMs = _sessionRemainingMs > 0 ? _sessionRemainingMs : ms;
+      state = state.copyWith(sessionTimerRemainingMs: _sessionRemainingMs);
+      _startSessionTicker();
+    }
+    // Restart the round by starting it anew but preserving roundIndex.
+    await startRound();
   }
 
   @override

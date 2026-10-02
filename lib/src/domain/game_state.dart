@@ -1,5 +1,5 @@
 // GamePhase describes the current lifecycle phase of a round.
-enum GamePhase { idle, revealing, guessing, roundResult, finished }
+enum GamePhase { idle, revealing, guessing, roundResult, finished, paused }
 
 // GameResult describes the outcome of a round or evaluation.
 class GameResult {

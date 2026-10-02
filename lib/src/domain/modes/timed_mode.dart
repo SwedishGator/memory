@@ -13,6 +13,9 @@ class TimedMode extends GameMode {
   TimedMode({this.id = 'timed', this.timeLimitMs = 5000});
 
   @override
+  int? sessionTimeLimitMs(GameConfig baseConfig) => baseConfig.sessionTimeLimitMs;
+
+  @override
   GameConfig applyRoundStart(GameState state, GameConfig baseConfig) {
     // TimedMode doesn't change the GameConfig by default. Modes that want
     // to override per-round timings can return a modified GameConfig here.

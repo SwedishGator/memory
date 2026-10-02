@@ -17,6 +17,10 @@ abstract class GameMode {
   // Whether the engine should continue after the latest state.
   bool shouldContinue(GameState state) => true;
 
+  // Optional per-mode session time limit (ms). Return null for no session
+  // timer. `TimedMode` will override this to enable a session timer.
+  int? sessionTimeLimitMs(GameConfig baseConfig) => null;
+
   // Result of validating a player's guess. Modes return this to instruct
   // the engine how to update score, selections, and whether the round
   // is complete.

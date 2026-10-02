@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/game_providers.dart';
 import '../../domain/mode.dart';
 //import '../../domain/modes/fixed_rounds_mode.dart';
+import '../../domain/game_state.dart';
 import '../widgets/grid_widget.dart';
 import 'settings_screen.dart';
 
@@ -75,25 +76,50 @@ class GameScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Control buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => engine.startGame(),
-                    child: const Text('Start'),
+            // Control buttons moved higher and given bottom padding so they
+            // won't be covered by system navigation on phones with soft
+            // navigation bars.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Builder(builder: (context) {
+                      // Button shows Start or Resume depending on phase
+                      if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
+                        return ElevatedButton(
+                          onPressed: () => engine.startGame(),
+                          child: const Text('Start'),
+                        );
+                      }
+                      if (gameState.phase == GamePhase.paused) {
+                        return ElevatedButton(
+                          onPressed: () => engine.resume(),
+                          child: const Text('Resume'),
+                        );
+                      }
+                      return ElevatedButton(
+                        onPressed: () => engine.pause(),
+                        child: const Text('Pause'),
+                      );
+                    }),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => engine.stop(),
-                    child: const Text('Stop'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (gameState.phase == GamePhase.paused) {
+                          engine.restartRound();
+                        } else {
+                          engine.stop();
+                        }
+                      },
+                      child: Text(gameState.phase == GamePhase.paused ? 'Restart' : 'Stop'),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
           ],
         ),
       ),
