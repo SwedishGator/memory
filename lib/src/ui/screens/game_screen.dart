@@ -66,110 +66,106 @@ class GameScreen extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
+    // Temporarily keep WillPopScope to preserve existing behavior.
+    // The widget was deprecated in newer Flutter; replace with `PopScope`
+    // once we confirm the target SDK and callback signature.
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
-        // Restore system UI when leaving the game screen
         await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
         return true;
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Memory Game'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
-          )
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Top info row: round, score, mistakes
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Round: ${gameState.roundIndex + 1}'),
-                      Text('Score: ${gameState.score}'),
-                      Text('Mistakes: ${gameState.mistakes}'),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  sessionTimerWidget,
-                  const SizedBox(height: 12),
-                  // Grid area expands to available space
-                  Expanded(
-                    child: GridWidget(
-                      state: gameState,
-                      onTileTap: (index) {
-                        engine.handleGuess(index);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Control buttons moved higher and given bottom padding so they
-                  // won't be covered by system navigation on phones with soft
-                  // navigation bars.
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0),
-                    child: Row(
+        appBar: AppBar(
+          title: const Text('Memory Game'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Builder(builder: (context) {
-                            // Button shows Start or Resume depending on phase
-                            if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
-                              return ElevatedButton(
-                                onPressed: () async {
-                                  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-                                  engine.startGame();
-                                },
-                                child: const Text('Start'),
-                              );
-                            }
-                            if (gameState.phase == GamePhase.paused) {
-                              return ElevatedButton(
-                                onPressed: () async {
-                                  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-                                  engine.resume();
-                                },
-                                child: const Text('Resume'),
-                              );
-                            }
-                            return ElevatedButton(
-                              onPressed: () => engine.pause(),
-                              child: const Text('Pause'),
-                            );
-                          }),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (gameState.phase == GamePhase.paused) {
-                                // restart should resume immersive mode
-                                await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-                                engine.restartRound();
-                              } else {
-                                // stopping should restore system UI
-                                await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-                                engine.stop();
-                              }
-                            },
-                            child: Text(gameState.phase == GamePhase.paused ? 'Restart' : 'Stop'),
-                          ),
-                        ),
+                        Text('Round: ${gameState.roundIndex + 1}'),
+                        Text('Score: ${gameState.score}'),
+                        Text('Mistakes: ${gameState.mistakes}'),
                       ],
                     ),
-                  ),
-                ],
-              ),
-              pauseOverlay,
-            ],
+                    const SizedBox(height: 8),
+                    sessionTimerWidget,
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: GridWidget(
+                        state: gameState,
+                        onTileTap: (index) => engine.handleGuess(index),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Builder(
+                              builder: (context) {
+                                if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
+                                  return ElevatedButton(
+                                    onPressed: () async {
+                                      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                                      engine.startGame();
+                                    },
+                                    child: const Text('Start'),
+                                  );
+                                } else if (gameState.phase == GamePhase.paused) {
+                                  return ElevatedButton(
+                                    onPressed: () async {
+                                      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                                      engine.resume();
+                                    },
+                                    child: const Text('Resume'),
+                                  );
+                                } else {
+                                  return ElevatedButton(
+                                    onPressed: () => engine.pause(),
+                                    child: const Text('Pause'),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (gameState.phase == GamePhase.paused) {
+                                  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                                  engine.restartRound();
+                                } else {
+                                  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                                  engine.stop();
+                                }
+                              },
+                              child: Text(gameState.phase == GamePhase.paused ? 'Restart' : 'Stop'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                pauseOverlay,
+              ],
+            ),
           ),
         ),
       ),
