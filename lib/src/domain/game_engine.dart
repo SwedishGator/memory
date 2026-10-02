@@ -97,8 +97,14 @@ class GameEngine extends StateNotifier<GameState> {
     // Reveal sequence to player
     await _revealSequence(_currentSequence, effectiveConfig.revealDurationMs);
 
-    // After revealing, switch to guessing phase
-    state = state.copyWith(phase: GamePhase.guessing, highlightedIndex: -1);
+    // After revealing, switch to guessing phase — but if the user paused
+    // during the reveal, respect the paused state and do not override it.
+    if (state.phase != GamePhase.paused) {
+      state = state.copyWith(phase: GamePhase.guessing, highlightedIndex: -1);
+    } else {
+      // Ensure UI doesn't show a lingering highlight while paused.
+      state = state.copyWith(highlightedIndex: -1);
+    }
   }
 
   // Generate a random sequence of unique positions (no duplicates).

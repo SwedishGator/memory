@@ -54,7 +54,7 @@ class GameScreen extends ConsumerWidget {
                       child: const Text('Resume'),
                     ),
                     const SizedBox(height: 8),
-                    OutlinedButton(
+                    ElevatedButton(
                       onPressed: () => engine.restartRound(),
                       child: const Text('Restart Round'),
                     ),
