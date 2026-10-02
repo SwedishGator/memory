@@ -39,11 +39,15 @@ class GridWidget extends StatelessWidget {
               final sequence = state.sequence;
               final isRevealedPersist = revealedCount > 0 && sequence.indexWhere((e) => e == index) >= 0 && sequence.indexOf(index) < revealedCount;
 
+              // Mistake handling: determine if this tile was guessed incorrectly
+              final isMistaken = state.mistakenIndices.contains(index);
+
               return GestureDetector(
                 onTap: () => onTileTap(index),
                 child: SquareTile(
                   highlighted: isHighlighted,
                   revealed: isRevealedPersist,
+                  mistaken: isMistaken,
                 ),
               );
             },

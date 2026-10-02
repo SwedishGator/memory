@@ -10,6 +10,7 @@ class GameConfig {
   final int allowedMistakes; // mistakes allowed in modes that support it
   final String controlsPosition; // 'bottom', 'top', 'floating'
   final int sessionTimeLimitMs; // session-wide time limit used by TimedMode
+  final MistakeHandling mistakeHandling; // how mistakes are shown/handled in UI
 
   const GameConfig({
     required this.startGridSize,
@@ -20,6 +21,7 @@ class GameConfig {
     required this.allowedMistakes,
     required this.controlsPosition,
     required this.sessionTimeLimitMs,
+    required this.mistakeHandling,
   });
 
   factory GameConfig.defaults() => const GameConfig(
@@ -30,7 +32,8 @@ class GameConfig {
         initialDifficulty: 'easy',
         allowedMistakes: 0,
       controlsPosition: 'bottom',
-    sessionTimeLimitMs: 100000,
+        sessionTimeLimitMs: 100000,
+        mistakeHandling: MistakeHandling.none,
       );
 
   factory GameConfig.fromJson(Map<String, dynamic> json) => GameConfig(
@@ -41,7 +44,8 @@ class GameConfig {
         initialDifficulty: json['initialDifficulty'] as String? ?? 'easy',
         allowedMistakes: json['allowedMistakes'] as int? ?? 0,
       controlsPosition: json['controlsPosition'] as String? ?? 'bottom',
-    sessionTimeLimitMs: json['sessionTimeLimitMs'] as int? ?? 100000,
+        sessionTimeLimitMs: json['sessionTimeLimitMs'] as int? ?? 100000,
+        mistakeHandling: _parseMistakeHandling(json['mistakeHandling'] as String?),
       );
 
   Map<String, dynamic> toJson() => {
@@ -53,6 +57,7 @@ class GameConfig {
         'allowedMistakes': allowedMistakes,
         'controlsPosition': controlsPosition,
         'sessionTimeLimitMs': sessionTimeLimitMs,
+        'mistakeHandling': mistakeHandling.name,
       };
 
   GameConfig copyWith({
@@ -64,6 +69,7 @@ class GameConfig {
     int? allowedMistakes,
       String? controlsPosition,
     int? sessionTimeLimitMs,
+    MistakeHandling? mistakeHandling,
   }) {
     return GameConfig(
       startGridSize: startGridSize ?? this.startGridSize,
@@ -74,6 +80,14 @@ class GameConfig {
       allowedMistakes: allowedMistakes ?? this.allowedMistakes,
         controlsPosition: controlsPosition ?? this.controlsPosition,
         sessionTimeLimitMs: sessionTimeLimitMs ?? this.sessionTimeLimitMs,
+        mistakeHandling: mistakeHandling ?? this.mistakeHandling,
     );
   }
 }
+
+  enum MistakeHandling { none, markRed, markRedDisableTap }
+
+  MistakeHandling _parseMistakeHandling(String? s) {
+    if (s == null) return MistakeHandling.none;
+    return MistakeHandling.values.firstWhere((e) => e.name == s, orElse: () => MistakeHandling.none);
+  }

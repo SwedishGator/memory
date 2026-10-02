@@ -21,6 +21,7 @@ class GameState {
   final GamePhase phase; // current phase
   final int revealDurationMs; // ms used for reveals (effective)
   final int sessionTimerRemainingMs; // session-wide timer visible to UI (ms)
+  final Set<int> mistakenIndices; // indices the player has guessed incorrectly this round
 
   const GameState({
     this.roundIndex = 0,
@@ -33,6 +34,7 @@ class GameState {
     this.phase = GamePhase.idle,
     this.revealDurationMs = 1500,
     this.sessionTimerRemainingMs = 0,
+    this.mistakenIndices = const {},
   });
 
   GameState copyWith({
@@ -46,6 +48,7 @@ class GameState {
     GamePhase? phase,
     int? revealDurationMs,
     int? sessionTimerRemainingMs,
+    Set<int>? mistakenIndices,
   }) {
     return GameState(
       roundIndex: roundIndex ?? this.roundIndex,
@@ -58,6 +61,7 @@ class GameState {
       phase: phase ?? this.phase,
       revealDurationMs: revealDurationMs ?? this.revealDurationMs,
       sessionTimerRemainingMs: sessionTimerRemainingMs ?? this.sessionTimerRemainingMs,
+      mistakenIndices: mistakenIndices ?? this.mistakenIndices,
     );
   }
 }

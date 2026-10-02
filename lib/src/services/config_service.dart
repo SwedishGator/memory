@@ -29,6 +29,7 @@ class ConfigService {
           revealDurationMs: overrideConfig.revealDurationMs,
           initialDifficulty: overrideConfig.initialDifficulty,
           allowedMistakes: overrideConfig.allowedMistakes,
+          mistakeHandling: overrideConfig.mistakeHandling,
         );
       }
 

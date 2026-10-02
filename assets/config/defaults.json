@@ -5,4 +5,5 @@
   "revealDurationMs": 1500,
   "initialDifficulty": "easy",
   "allowedMistakes": 0
+  ,"mistakeHandling":"none"
 }

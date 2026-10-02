@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 class SquareTile extends StatelessWidget {
   final bool highlighted;
   final bool revealed;
+  final bool mistaken;
 
-  const SquareTile({Key? key, this.highlighted = false, this.revealed = false}) : super(key: key);
+  const SquareTile({Key? key, this.highlighted = false, this.revealed = false, this.mistaken = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +18,8 @@ class SquareTile extends StatelessWidget {
       color = Colors.orange; // currently being shown in sequence
     } else if (revealed) {
       color = Colors.green; // already correctly guessed
+    } else if (mistaken) {
+      color = Colors.redAccent; // user guessed this incorrectly
     } else {
       color = Colors.grey.shade300; // default
     }

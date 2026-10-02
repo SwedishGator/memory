@@ -150,13 +150,19 @@ class GameEngine extends StateNotifier<GameState> {
       _currentGuessIndex++;
     }
 
+    // Track mistaken indices for UI when modes indicate a wrong guess.
+    var newMistaken = Set<int>.from(state.mistakenIndices);
+    if (!result.correct) {
+      newMistaken.add(position);
+    }
+
     // If the round completes, include any round completion bonus.
     var finalScore = newScore;
     if (result.roundComplete) {
       finalScore = finalScore + result.roundCompletionBonus;
     }
 
-    state = state.copyWith(score: finalScore, mistakes: newMistakes, guessIndex: _currentGuessIndex);
+    state = state.copyWith(score: finalScore, mistakes: newMistakes, guessIndex: _currentGuessIndex, mistakenIndices: newMistaken);
 
     // If the mode reports the round complete, notify accordingly.
     if (result.roundComplete) {
