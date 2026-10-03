@@ -154,6 +154,10 @@ class GameEngine extends StateNotifier<GameState> {
     var newMistaken = Set<int>.from(state.mistakenIndices);
     if (!result.correct) {
       newMistaken.add(position);
+    } else {
+      // When the player selects the correct tile, clear mistaken marks
+      // so tiles revert to normal color and can be selected again later.
+      newMistaken.clear();
     }
 
     // If the round completes, include any round completion bonus.
