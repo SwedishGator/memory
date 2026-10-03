@@ -38,6 +38,7 @@ class GameEngine extends StateNotifier<GameState> {
       score: 0,
       phase: GamePhase.idle,
       guessIndex: 0,
+      mistakenIndices: {},
     );
     // Initialize session timer only if the current mode enables it.
     final ms = mode.sessionTimeLimitMs(baseConfig);
@@ -92,6 +93,7 @@ class GameEngine extends StateNotifier<GameState> {
       phase: GamePhase.revealing,
       revealDurationMs: effectiveConfig.revealDurationMs,
       gridSize: gridSizeForRound,
+      mistakenIndices: {},
     );
 
     // Reveal sequence to player
