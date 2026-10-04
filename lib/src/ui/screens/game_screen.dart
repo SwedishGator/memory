@@ -66,6 +66,46 @@ class GameScreen extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
+    // Game over overlay shown when the session finishes.
+    final Widget gameOverOverlay = gameState.phase == GamePhase.finished
+        ? Positioned.fill(
+            child: Container(
+              color: Colors.black87,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Game Over', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Text('Score: ${gameState.score}', style: const TextStyle(color: Colors.white, fontSize: 20)),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                            engine.startGame();
+                          },
+                          child: const Text('Play Again'),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Exit'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
     // Temporarily keep WillPopScope to preserve existing behavior.
     // The widget was deprecated in newer Flutter; replace with `PopScope`
     // once we confirm the target SDK and callback signature.
@@ -164,6 +204,7 @@ class GameScreen extends ConsumerWidget {
                   ],
                 ),
                 pauseOverlay,
+                gameOverOverlay,
               ],
             ),
           ),
