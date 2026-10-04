@@ -92,8 +92,9 @@ class GameScreen extends ConsumerWidget {
                         const SizedBox(width: 12),
                         ElevatedButton(
                           onPressed: () async {
+                            final nav = Navigator.of(context);
                             await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-                            Navigator.of(context).pop();
+                            nav.pop();
                           },
                           child: const Text('Exit'),
                         ),
