@@ -66,6 +66,29 @@ class GameScreen extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
+    final Widget startOverlay = gameState.phase == GamePhase.idle
+        ? Positioned.fill(
+            child: GestureDetector(
+              onTap: () async {
+                await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                await engine.beginRound();
+              },
+              child: Container(
+                color: Colors.black54,
+                child: Center(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                      await engine.beginRound();
+                    },
+                    child: const Text('Click to start'),
+                  ),
+                ),
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
     // Game over overlay shown when the session finishes.
     final Widget gameOverOverlay = gameState.phase == GamePhase.finished
         ? Positioned.fill(
@@ -159,11 +182,19 @@ class GameScreen extends ConsumerWidget {
                           Expanded(
                             child: Builder(
                               builder: (context) {
-                                if (gameState.phase == GamePhase.idle || gameState.phase == GamePhase.finished) {
+                                if (gameState.phase == GamePhase.finished) {
                                   return ElevatedButton(
                                     onPressed: () async {
                                       await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-                                      engine.startGame();
+                                      await engine.startGame();
+                                    },
+                                    child: const Text('Play Again'),
+                                  );
+                                } else if (gameState.phase == GamePhase.idle) {
+                                  return ElevatedButton(
+                                    onPressed: () async {
+                                      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+                                      await engine.beginRound();
                                     },
                                     child: const Text('Start'),
                                   );
@@ -205,6 +236,7 @@ class GameScreen extends ConsumerWidget {
                   ],
                 ),
                 pauseOverlay,
+                startOverlay,
                 gameOverOverlay,
               ],
             ),

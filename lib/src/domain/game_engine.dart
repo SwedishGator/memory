@@ -31,14 +31,19 @@ class GameEngine extends StateNotifier<GameState> {
 
   // Start a full game session.
   Future<void> startGame() async {
+    _isRevealing = false;
+    _currentSelection = {};
+    _currentGuessIndex = 0;
     state = state.copyWith(
       roundIndex: 0,
       gridSize: baseConfig.startGridSize,
+      sequence: const [],
+      highlightedIndex: -1,
       mistakes: 0,
       score: 0,
       phase: GamePhase.idle,
       guessIndex: 0,
-      mistakenIndices: {},
+      mistakenIndices: const {},
     );
     // Initialize session timer only if the current mode enables it.
     final ms = mode.sessionTimeLimitMs(baseConfig);
@@ -51,6 +56,10 @@ class GameEngine extends StateNotifier<GameState> {
       state = state.copyWith(sessionTimerRemainingMs: 0);
       _sessionTicker?.cancel();
     }
+  }
+
+  Future<void> beginRound() async {
+    if (state.phase == GamePhase.finished) return;
     await startRound();
   }
 
@@ -135,7 +144,7 @@ class GameEngine extends StateNotifier<GameState> {
   }
 
   // Handle a player's guess; returns true if guess was correct.
-  bool handleGuess(int position) {
+  Future<bool> handleGuess(int position) async {
     if (state.phase != GamePhase.guessing) return false;
     // Delegate validation to the active mode.
     final result = mode.validateGuess(state, position, _currentSelection);
@@ -172,12 +181,12 @@ class GameEngine extends StateNotifier<GameState> {
 
     // If the mode reports the round complete, notify accordingly.
     if (result.roundComplete) {
-      _onRoundComplete(success: result.correct);
+      await _onRoundComplete(success: result.correct);
     } else if (!result.correct) {
       // If incorrect and mode decides game should stop, end round.
       final modeResult = mode.onRoundEnd(state);
       if (!modeResult.continueGame) {
-        _onRoundComplete(success: false);
+        await _onRoundComplete(success: false);
       }
     }
 
@@ -186,10 +195,15 @@ class GameEngine extends StateNotifier<GameState> {
 
   // Called when round completes to advance or finish the game.
   Future<void> _onRoundComplete({required bool success}) async {
-    state = state.copyWith(phase: GamePhase.roundResult);
     final result = mode.onRoundEnd(state);
     if (!result.continueGame) {
-      state = state.copyWith(phase: GamePhase.finished);
+      state = state.copyWith(
+        phase: GamePhase.finished,
+        sequence: const [],
+        highlightedIndex: -1,
+        guessIndex: 0,
+        mistakenIndices: const {},
+      );
       _sessionTicker?.cancel();
       return;
     }
@@ -205,13 +219,12 @@ class GameEngine extends StateNotifier<GameState> {
     state = state.copyWith(
       roundIndex: nextRound,
       gridSize: nextGrid,
+      sequence: const [],
+      highlightedIndex: -1,
       phase: GamePhase.idle,
       guessIndex: 0,
+      mistakenIndices: const {},
     );
-
-    // small delay before starting the next round automatically
-    await Future.delayed(const Duration(milliseconds: 600));
-    await startRound();
   }
 
   // Stop any active reveal and mark finished.
