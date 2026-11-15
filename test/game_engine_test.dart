@@ -22,7 +22,7 @@ void main() {
 
   test('fixed rounds mode ends after the last round', () {
     final mode = FixedRoundsMode(rounds: 1);
-    final result = mode.onRoundEnd(GameState(roundIndex: 0));
+    final result = mode.onRoundEnd(const GameState(roundIndex: 0));
 
     expect(result.continueGame, isFalse);
   });
